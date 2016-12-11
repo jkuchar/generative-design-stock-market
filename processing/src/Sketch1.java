@@ -142,6 +142,9 @@ public class Sketch1 extends PApplet {
 //        dealers.add(new WantToBuyForAmount(exchange));
 
 //        dealers.add(new WantToSellForAmount(exchange));
+//        dealers.add(new WantToSellForAmount(exchange));
+//        dealers.add(new WantToSellForAmount(exchange));
+//        dealers.add(new WantToSellForAmount(exchange));
 
 
 //        dealers.add(new WantToBuyForAmount(exchange, 1200, 5000));
@@ -174,14 +177,29 @@ public class Sketch1 extends PApplet {
 //        color(360,100, 100);
 
         noSmooth();
+
+
+        positions_leftX = width-100;
+        positions_rightX = width;
+
+
+        sellersRed = color(360, 100, 100);
+        buyersBlue = color(200, 100, 100);
+        dealsWhite = color(360, 0, 100);
     }
 
-    static int frameNumer = 0;
+    private static int frameNumer = 0;
 
     private float mapE(int value, int max) {
         return max - map(value, 700,1300, 0, max);
     }
 
+    private int sellersRed;
+    private int buyersBlue;
+    private int dealsWhite;
+
+    private int positions_leftX;
+    private int positions_rightX;
 
     @Override
     public void draw() {
@@ -189,27 +207,66 @@ public class Sketch1 extends PApplet {
             background(0);
         }
 
+
+
 //        stroke(360, 100, 100);
 //        point(frameNumer, mapE(exchange.getLastDealPrice()));
 
-        stroke(360, 100, 100);
+        stroke(sellersRed);
         exchange.getSellQueue().forEach((Order o) -> {
             point(frameNumer, mapE(o.getPrice(), height));
         });
 
-        stroke(200, 100, 100);
+        stroke(buyersBlue);
         exchange.getBuyQueue().forEach((Order o) -> {
             point(frameNumer, mapE(o.getPrice(), height));
         });
 
-        stroke(360, 0, 100); // white
+        stroke(dealsWhite);
         point(frameNumer, mapE(exchange.getLastDealPrice(), height));
         point(frameNumer, 1+mapE(exchange.getLastDealPrice(), height));
 
+        drawPositions();
 
         frameNumer++;
-        if(frameNumer > width) {
+        if(frameNumer > (width - 100)) {
             frameNumer = 0;
         }
+    }
+
+    private void drawPositions() {
+        noStroke();
+        fill(0, 80);
+        rect(positions_leftX, 0, 100, height);
+
+        stroke(sellersRed, 50);
+        exchange.getSellQueue().forEach((Order o) -> {
+            positions_drawALine(o.getPrice(), 50, 50);
+        });
+
+        stroke(buyersBlue, 50);
+        exchange.getBuyQueue().forEach((Order o) -> {
+            positions_drawALine(o.getPrice(), 50, 50);
+        });
+
+
+        stroke(sellersRed);
+        positions_drawALine(exchange.getBidPrice(), 25, 25);
+
+        stroke(buyersBlue);
+        positions_drawALine(exchange.getAskPrice(), 25, 25);
+
+        stroke(dealsWhite);
+        positions_drawALine(exchange.getLastDealPrice(), 0, 25);
+
+    }
+
+    private void positions_drawALine(int price, double leftStartProcent, double widthProcent) {
+        leftStartProcent /= 100;
+        widthProcent /= 100;
+        float y = mapE(price, height);
+        float leftX = positions_leftX + (float) (100 * leftStartProcent);
+        float rightX = leftX + (float) (100 * widthProcent);
+        line(leftX, y, positions_rightX, y);
     }
 }

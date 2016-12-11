@@ -194,6 +194,14 @@ public class Exchange extends Thread {
         }
     }
 
+    public synchronized int getAskSize() {
+        return ask.size();
+    }
+
+    public synchronized int getBigSize() {
+        return bid.size();
+    }
+
     public synchronized int getSpread() {
         return getBidPrice() - getAskPrice();
     }

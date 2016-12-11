@@ -206,11 +206,14 @@ public class Sketch1 extends PApplet {
 
     @Override
     public void draw() {
+        drawGraph();
+        drawPositions();
+    }
+
+    private void drawGraph() {
         if(frameNumer == 0) {
             background(0);
         }
-
-
 
 //        stroke(360, 100, 100);
 //        point(frameNumer, mapE(exchange.getLastDealPrice()));
@@ -231,7 +234,6 @@ public class Sketch1 extends PApplet {
 
 
         drawDeals();
-        drawPositions();
 
         frameNumer++;
         if(frameNumer > (width - 100)) {
@@ -278,6 +280,47 @@ public class Sketch1 extends PApplet {
         stroke(dealsWhite);
         positions_drawALine(exchange.getLastDealPrice(), 0, 25);
 
+
+        drawStatusText();
+
+    }
+
+    static int lastPrice = 0;
+
+    private void drawStatusText() {
+
+        StringBuilder status = new StringBuilder();
+        status.append("price:\n");
+        status.append(exchange.getLastDealPrice());
+        status.append("\n");
+        status.append("buy / sell price:\n");
+        status.append("\n");
+        status.append(exchange.getAskPrice());
+        status.append(" / ");
+        status.append(exchange.getBidPrice());
+        status.append("\n");
+        status.append("\n");
+        status.append("spread:\n");
+        status.append(exchange.getBidPrice() - exchange.getAskPrice());
+        status.append("\n");
+        status.append("\n");
+        status.append("number of buers / sellers:\n");
+        status.append(exchange.getAskSize());
+        status.append(" / ");
+        status.append(exchange.getBigSize());
+
+        int currentPrice = exchange.getLastDealPrice();
+        if(lastPrice < currentPrice) {
+            fill(121, 80, 80); // green
+        } else {
+            fill(0, 80, 80); // red
+        }
+
+        lastPrice = currentPrice;
+
+        noStroke();
+        textSize(12);
+        text(status.toString(), positions_leftX + 10, 20);
     }
 
     private void positions_drawALine(int price, double leftStartProcent, double widthProcent) {

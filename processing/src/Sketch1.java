@@ -13,6 +13,8 @@ public class Sketch1 extends PApplet {
 
     private Exchange exchange;
 
+    int closedDeals = 0;
+
     private void initExchange() {
         exchange = new Exchange();
 
@@ -31,6 +33,7 @@ public class Sketch1 extends PApplet {
             public void orderCompleted(CompletedOrder o) {
 //                System.out.println("PRICE new price: " + o.getBuyer().getPrice() + " ; QUEUE: ask:" + exchange.getBuyQueue().size() + " bid:" + exchange.getSellQueue().size());
 //                System.out.println("QUEUE: BUY:" + exchange.getAskPrice()+ "; SELL:" + exchange.getBidPrice() + "; spread: "+exchange.getSpread());
+                closedDeals++;
             }
 
             @Override
@@ -226,12 +229,28 @@ public class Sketch1 extends PApplet {
         point(frameNumer, mapE(exchange.getLastDealPrice(), height));
         point(frameNumer, 1+mapE(exchange.getLastDealPrice(), height));
 
+
+        drawDeals();
         drawPositions();
 
         frameNumer++;
         if(frameNumer > (width - 100)) {
             frameNumer = 0;
         }
+    }
+
+    private void drawDeals() {
+        int waitFrames = 20;
+        if(frameNumer % waitFrames != 0) {
+            return;
+        }
+
+        fill(255);
+//        line(frameNumer, height - closedDeals, frameNumer, height);
+        rect(frameNumer, height - closedDeals, waitFrames, closedDeals);
+
+        // reset counter
+        closedDeals = 0;
     }
 
     private void drawPositions() {

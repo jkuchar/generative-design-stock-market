@@ -1,5 +1,7 @@
 package model;
 
+import com.sun.org.apache.xpath.internal.operations.Or;
+
 import java.util.*;
 
 /**
@@ -24,7 +26,7 @@ public class Exchange {
         int openingPrice = 1000;
         this.lastDealPrice = openingPrice;
         this.buy = new TreeSet<>(new BackwardOrderComparator());
-        this.sell = new TreeSet<>(new ForwardOrderComparator());
+        this.sell = new TreeSet<>(new BackwardOrderComparator());
         this.completedOrders = new LinkedList<>();
         observers = new LinkedList<>();
     }
@@ -54,27 +56,75 @@ public class Exchange {
     public synchronized void doDeals() {
         if(buy.isEmpty() || sell.isEmpty()) return;
 
-        Order buyPeek = buy.last(); // highest price
-        Order sellPeek = sell.last(); // lowest price
-        if(buyPeek == null || sellPeek == null) return;
+        // doesn't matter which queue we will iterate over
+        Iterator<Order> buyIterator = buy.iterator();
+        Iterator<Order> sellIterator = sell.iterator();
 
-        if(sellPeek.getPrice() > buyPeek.getPrice()) {
-            //System.out.println("Spoofing detected; removed from exchange. " + sellPeek.getPrice());
+        Order sellOrder = null;
+        Order buyOrder = null;
 
-            //throw new RuntimeException("Spoofing detected.");
-            // todo: add to observer
-            sell.remove(sellPeek);
+        //System.out.println("Starting doDeals()");
+        while(sellIterator.hasNext()) {
+            //if(sellOrder == null) {
+                sellOrder = sellIterator.next();
+            //}
 
-            observers.forEach( (ExchangeObserver observer) -> observer.spoofingDetected(buyPeek, sellPeek) );
-        }
+            // now go from highest value to the lowest
+            // parallely iterate over buy and sell queue
+            // this has only O(n)
 
-        if(buyPeek.getPrice() == sellPeek.getPrice()) {
-            // cool! Do the transaction
+            while(buyIterator.hasNext()) {
+                if(buyOrder == null) {
+                    buyOrder = buyIterator.next();
+                }
 
-            CompletedOrder co = completeOrder(buyPeek, sellPeek);
+                //System.out.println("sell:" + sellOrder.getPrice() + " buy:" + buyOrder.getPrice());
+                if(sellOrder.getPrice() < buyOrder.getPrice()) {
+                    buyOrder = null; // got to the next buy request
+                    continue;
+                }
+                if (buyOrder.getPrice() == sellOrder.getPrice()) {
+                    sellIterator.remove();
+                    buyIterator.remove();
 
-            observers.forEach( (ExchangeObserver observer) -> observer.orderCompleted(co) );
-        }
+                    CompletedOrder co = completeOrder(buyOrder, sellOrder);
+                    observers.forEach( (ExchangeObserver observer) -> observer.orderCompleted(co) );
+
+                    buyOrder = null; // got to the next buy request
+                    continue;
+                }
+
+                // intentionally didn't deleted buyOrder
+                // This will go out of buy-loop into sell-loop without moving to next buy request
+                break;
+
+            }
+
+        };
+
+        return;
+
+//        Order sellPeek = sell.last(); // lowest price
+//        Order buyPeek = buy.first(); // highest price
+//        if(buyPeek == null || sellPeek == null) return;
+//
+//        if(sellPeek.getPrice() > buyPeek.getPrice()) {
+//            //System.out.println("Spoofing detected; removed from exchange. " + sellPeek.getPrice());
+//
+//            //throw new RuntimeException("Spoofing detected.");
+//            // todo: add to observer
+//            sell.remove(sellPeek);
+//
+//            observers.forEach( (ExchangeObserver observer) -> observer.spoofingDetected(buyPeek, sellPeek) );
+//        }
+//
+//        if(buyPeek.getPrice() == sellPeek.getPrice()) {
+//            // cool! Do the transaction
+//
+//            CompletedOrder co = completeOrder(buyPeek, sellPeek);
+//
+//            observers.forEach( (ExchangeObserver observer) -> observer.orderCompleted(co) );
+//        }
 
         // there is spread bigger then zero
     }

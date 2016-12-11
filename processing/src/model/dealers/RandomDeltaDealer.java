@@ -9,13 +9,13 @@ import java.util.Random;
 /**
  * This file is part of PA165 school project.
  */
-public class RandomDeltaBuyer extends Thread implements Dealer {
+public class RandomDeltaDealer extends Thread implements Dealer {
 
     private final Exchange exchange;
     private final int delta;
     private SimpleBuyerAction action;
 
-    public RandomDeltaBuyer(Exchange exchange, int delta) {
+    public RandomDeltaDealer(Exchange exchange, int delta) {
         this.exchange = exchange;
         this.delta = delta;
         this.action = SimpleBuyerAction.BUY;

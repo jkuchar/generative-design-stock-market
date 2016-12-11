@@ -1,6 +1,6 @@
 import model.*;
 import model.dealers.Dealer;
-import model.dealers.RandomDeltaBuyer;
+import model.dealers.RandomDeltaDealer;
 import model.dealers.SimpleDealer;
 import model.dealers.SimpleBuyerAction;
 import processing.core.PApplet;
@@ -32,10 +32,7 @@ public class Sketch1 extends PApplet {
 
             @Override
             public void orderCompleted(CompletedOrder o) {
-                System.out.println("Order has been made; stock price has been update " + o.getBuyer().getPrice() + "!");
-                System.out.println("Still waiting: buy:" + exchange.getBuyQueue().size() + " sell:" + exchange.getSellQueue().size());
-
-                System.out.println("Waiting requsts: BUY:" + exchange.getBuyQueue().size() + " SELL:" + exchange.getSellQueue().size());
+                System.out.println("PRICE new price: " + o.getBuyer().getPrice() + " ; QUEUE: buy:" + exchange.getBuyQueue().size() + " sell:" + exchange.getSellQueue().size());
             }
 
             @Override
@@ -46,7 +43,7 @@ public class Sketch1 extends PApplet {
 
         List<Dealer> dealers = new ArrayList<>();
 
-        // Buys every time for price cheaper then is current one
+//         Buys every time for price cheaper then is current one
         dealers.add(new SimpleDealer(
                 exchange,
                 -2,
@@ -60,11 +57,12 @@ public class Sketch1 extends PApplet {
                 SimpleBuyerAction.SELL
         ));
 
-        dealers.add(new RandomDeltaBuyer(
-                exchange,
-                10
-        ));
-
+        for(int i = 0; i < 1; i++) {
+            dealers.add(new RandomDeltaDealer(
+                    exchange,
+                    (int) Math.round(Math.random() * 10))
+            );
+        }
 
         dealers.forEach(Dealer::start);
 

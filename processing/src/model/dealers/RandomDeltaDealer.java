@@ -20,13 +20,16 @@ public class RandomDeltaDealer extends Thread implements Dealer {
 
     private double sentiment;
 
+    private int millisecondsSleep;
+
     /**
      * @param sentiment 1 = 100% optimistic; 0 = 100% pessimistic
      */
-    public RandomDeltaDealer(Exchange exchange, int delta, double sentiment) {
+    public RandomDeltaDealer(Exchange exchange, int delta, double sentiment, int millisecondsSleep) {
         this.exchange = exchange;
         this.delta = delta;
         this.sentiment = sentiment;
+        this.millisecondsSleep = millisecondsSleep;
         orders = new ArrayList<>();
     }
 
@@ -50,7 +53,7 @@ public class RandomDeltaDealer extends Thread implements Dealer {
             orders.add(action.doAction(exchange, delta));
 
             try {
-                Thread.sleep(10);
+                Thread.sleep(millisecondsSleep);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

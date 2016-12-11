@@ -118,7 +118,7 @@ public class Exchange extends Thread {
             this.doDeals();
 
             try {
-                Thread.sleep(10);
+                Thread.sleep((int) (1000/60));
             } catch (InterruptedException e) {
                 System.out.println("Exchange matched failed.");
             }
@@ -126,6 +126,8 @@ public class Exchange extends Thread {
     }
 
     private CompletedOrder completeOrder(Order seller, Order buyer) {
+        seller.fireCompletedEvent();
+        buyer.fireCompletedEvent();
         CompletedOrder co = new CompletedOrder(seller, buyer);
         completedOrders.add(co);
         this.lastDealPrice = co.getBuyer().getPrice();
@@ -151,6 +153,23 @@ public class Exchange extends Thread {
 
     public synchronized int getLastDealPrice() {
         return lastDealPrice;
+    }
+
+    public synchronized int lastPriceAveraged(int historyLength) {
+        if(completedOrders.isEmpty()) return lastDealPrice;
+
+        int size = completedOrders.size();
+        int startIndex = size - historyLength;
+        int endIndex = size;
+
+        List<CompletedOrder> list = completedOrders.subList(startIndex, endIndex);
+        int total = 0;
+        int count = 0;
+        for(CompletedOrder o : list) {
+            total += o.getBuyer().getPrice();
+            count++;
+        }
+        return total / count;
     }
 
     /**

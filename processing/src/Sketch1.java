@@ -30,7 +30,7 @@ public class Sketch1 extends PApplet {
             @Override
             public void orderCompleted(CompletedOrder o) {
 //                System.out.println("PRICE new price: " + o.getBuyer().getPrice() + " ; QUEUE: ask:" + exchange.getBuyQueue().size() + " bid:" + exchange.getSellQueue().size());
-                System.out.println("QUEUE: BUY:" + exchange.getAskPrice()+ "; SELL:" + exchange.getBidPrice() + "; spread: "+exchange.getSpread());
+//                System.out.println("QUEUE: BUY:" + exchange.getAskPrice()+ "; SELL:" + exchange.getBidPrice() + "; spread: "+exchange.getSpread());
             }
 
             @Override
@@ -41,25 +41,55 @@ public class Sketch1 extends PApplet {
 
         List<Dealer> dealers = new ArrayList<>();
 
-//         Buys every frameNumer for price cheaper then is current one
-        dealers.add(new SimpleDealer(
-                exchange,
-                2,
-                SimpleBuyerAction.BUY
-        ));
+        for(int i = 0; i < 100; i++) {
+            exchange.bid(1008);
+            exchange.bid(1007);
+            exchange.bid(1005);
 
-        dealers.add(new SimpleDealer(
-                exchange,
-                -2,
-                SimpleBuyerAction.SELL
-        ));
+            exchange.ask(989);
+            exchange.ask(988);
+            exchange.ask(987);
+        }
+
+        for(int i = 0; i<10; i++) {
+            for(int y = 0; y < 3; y++) {
+                dealers.add(new SimpleDealer(
+                        exchange,
+                        i,
+                        SimpleBuyerAction.SELL
+                ));
+
+                dealers.add(new SimpleDealer(
+                        exchange,
+                        -i,
+                        SimpleBuyerAction.BUY
+                ));
+            }
+        }
+
+        // dumping:
+        for(int i = 0; i<3; i++) {
+            for(int y = 0; y < 3; y++) {
+                dealers.add(new SimpleDealer(
+                        exchange,
+                        i,
+                        SimpleBuyerAction.BUY
+                ));
+
+                dealers.add(new SimpleDealer(
+                        exchange,
+                        -i,
+                        SimpleBuyerAction.SELL
+                ));
+            }
+        }
 
 //        // Sells every frameNumer for price higher then is current one
 //
 //        for(int i = 0; i < 10; i++) {
 //                dealers.add(new SimpleDealer(
 //                    exchange,
-//                    (int) -(Math.random() * 100),
+//                    (int) -(Math.random() * 50),
 //                    SimpleBuyerAction.SELL
 //                ));
 //        }
@@ -74,20 +104,62 @@ public class Sketch1 extends PApplet {
 //                        )
 //                );
 //            }
-////        }
-//        for (int i = 0; i < 5; i++) {
-//            dealers.add(new RandomDeltaDealer(
-//                            exchange,
-//                            (int) Math.round(Math.random() * 10),
-//                            0.9
-//                    )
-//            );
 //        }
+//
+//        for (int i = 0; i < 1; i++) {
+//        dealers.add(new RandomDeltaDealer(
+//                exchange,
+//                (int) Math.round(Math.random() * 20),
+//                0,
+//                500)
+//        );
+//        dealers.add(new RandomDeltaDealer(
+//                exchange,
+//                (int) Math.round(Math.random() * 15),
+//                .5,
+//                300)
+//        );
+//        dealers.add(new RandomDeltaDealer(
+//                exchange,
+//                (int) Math.round(Math.random() * 10),
+//                1,
+//                100
+//        ));
+//
+//        dealers.add(new RandomDeltaDealer(
+//                exchange,
+//                (int) Math.round(Math.random() * 3),
+//                1,
+//                10
+//        ));
+//        dealers.add(new RandomDeltaDealer(
+//                exchange,
+//                (int) Math.round(Math.random() * 1),
+//                1,
+//                5
+//        ));
 
-        dealers.add(new MarketMakerDealer(exchange));
+//        dealers.add(new WantToBuyForAmount(exchange));
+
+//        dealers.add(new WantToSellForAmount(exchange));
+
+
+//        dealers.add(new WantToBuyForAmount(exchange, 1200, 5000));
+//        dealers.add(new WantToSellForAmount(exchange, 900, 5000));
+//        dealers.add(new WantToSellForAmount(exchange, 900, 500000));
+//        dealers.add(new WantToBuyForAmount(exchange, 1200, 500000));
+//
+//        dealers.add(new MarketMakerDealer(exchange));
 
         exchange.start();
-        dealers.forEach(Dealer::start);
+        dealers.forEach((Dealer d) -> {
+            d.start();
+            try {
+                Thread.sleep((int) (Math.random() * 100));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void setup() {
@@ -95,7 +167,9 @@ public class Sketch1 extends PApplet {
         this.initExchange();
 
         colorMode(HSB, 360, 100, 100);
-        size(800, 800);
+        size(1500, 800);
+
+        frameRate(60);
 
 //        color(360,100, 100);
 

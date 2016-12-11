@@ -101,32 +101,6 @@ public class Exchange {
             }
 
         };
-
-        return;
-
-//        Order sellPeek = sell.last(); // lowest price
-//        Order buyPeek = buy.first(); // highest price
-//        if(buyPeek == null || sellPeek == null) return;
-//
-//        if(sellPeek.getPrice() > buyPeek.getPrice()) {
-//            //System.out.println("Spoofing detected; removed from exchange. " + sellPeek.getPrice());
-//
-//            //throw new RuntimeException("Spoofing detected.");
-//            // todo: add to observer
-//            sell.remove(sellPeek);
-//
-//            observers.forEach( (ExchangeObserver observer) -> observer.spoofingDetected(buyPeek, sellPeek) );
-//        }
-//
-//        if(buyPeek.getPrice() == sellPeek.getPrice()) {
-//            // cool! Do the transaction
-//
-//            CompletedOrder co = completeOrder(buyPeek, sellPeek);
-//
-//            observers.forEach( (ExchangeObserver observer) -> observer.orderCompleted(co) );
-//        }
-
-        // there is spread bigger then zero
     }
 
     private CompletedOrder completeOrder(Order seller, Order buyer) {
@@ -141,19 +115,19 @@ public class Exchange {
     }
 
 
-    public synchronized Collection<Order> getBuyQueue() {
-        return Collections.unmodifiableCollection(this.buy);
+    public synchronized SortedSet<Order> getBuyQueue() {
+        return new TreeSet<>(this.buy);
     }
 
-    public synchronized Collection<Order> getSellQueue() {
-        return Collections.unmodifiableCollection(this.sell);
+    public synchronized SortedSet<Order> getSellQueue() {
+        return new TreeSet<>(this.sell);
     }
 
     public synchronized List<CompletedOrder> getCompletedOrders() {
-        return Collections.unmodifiableList(completedOrders);
+        return new ArrayList<>(completedOrders);
     }
 
-    public int getLastDealPrice() {
+    public synchronized int getLastDealPrice() {
         return lastDealPrice;
     }
 }

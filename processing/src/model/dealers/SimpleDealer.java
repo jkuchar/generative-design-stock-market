@@ -26,11 +26,13 @@ public class SimpleDealer extends Thread implements Dealer {
             // todo: cancel orders after ten ticks or so
             Order o = action.doAction(
                 exchange,
-                exchange.getLastDealPrice() - delta
+                exchange.getLastDealPrice() + delta
             );
 
+//            System.out.println("placed order; current price: " + exchange.getLastDealPrice() +  "; new my price: " + o.getPrice());
+
             try {
-                Thread.sleep(1000);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 System.out.println("Thread interrupted.");
                 return;

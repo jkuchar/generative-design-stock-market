@@ -11,12 +11,12 @@ import java.util.List;
 public class Sketch1 extends PApplet {
 
     static public void main(String args[]) {
-        PApplet.main(new String[] { "Sketch1" });
+        PApplet.main(new String[]{"Sketch1"});
     }
 
     private Exchange exchange;
 
-    public void setup() {
+    private void initExchange() {
         exchange = new Exchange();
 
         exchange.addObserver(new ExchangeObserver() {
@@ -32,7 +32,7 @@ public class Sketch1 extends PApplet {
 
             @Override
             public void orderCompleted(CompletedOrder o) {
-                System.out.println("PRICE new price: " + o.getBuyer().getPrice() + " ; QUEUE: buy:" + exchange.getBuyQueue().size() + " sell:" + exchange.getSellQueue().size());
+//                System.out.println("PRICE new price: " + o.getBuyer().getPrice() + " ; QUEUE: buy:" + exchange.getBuyQueue().size() + " sell:" + exchange.getSellQueue().size());
             }
 
             @Override
@@ -43,79 +43,100 @@ public class Sketch1 extends PApplet {
 
         List<Dealer> dealers = new ArrayList<>();
 
-//         Buys every time for price cheaper then is current one
-        dealers.add(new SimpleDealer(
-                exchange,
-                -2,
-                SimpleBuyerAction.BUY
-        ));
+//         Buys every frameNumer for price cheaper then is current one
+//        dealers.add(new SimpleDealer(
+//                exchange,
+//                -2,
+//                SimpleBuyerAction.BUY
+//        ));
+//
+//        // Sells every frameNumer for price higher then is current one
 
-        // Sells every time for price higher then is current one
-        dealers.add(new SimpleDealer(
-                exchange,
-                2,
-                SimpleBuyerAction.SELL
-        ));
+//        for(int i = 0; i < 2; i++) {
+//            dealers.add(new SimpleDealer(
+//                exchange,
+//                3,
+//                SimpleBuyerAction.BUY
+//            ));
+//        }
 
-        for(int i = 0; i < 1; i++) {
+//
+        for (int i = 0; i < 10; i++) {
             dealers.add(new RandomDeltaDealer(
-                    exchange,
-                    (int) Math.round(Math.random() * 10))
+                            exchange,
+                            (int) Math.round(Math.random() * 10),
+                            0.1
+                    )
+            );
+        }
+
+        for (int i = 0; i < 10; i++) {
+            dealers.add(new RandomDeltaDealer(
+                            exchange,
+                            (int) Math.round(Math.random() * 10),
+                            0.9
+                    )
             );
         }
 
         dealers.forEach(Dealer::start);
 
-        do {
-            exchange.doDeals();
+        // Exchange engine
+        (new Thread(() -> {
+            do {
+                exchange.doDeals();
 
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                System.out.println("Exchange matched failed.");
-            }
-        } while (true);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    System.out.println("Exchange matched failed.");
+                }
+            } while (true);
+        })).start();
+    }
 
-//        do {
-//            exchange.doDeals();
-//            exchange.buy(5);
-//            exchange.buy(6);
-//            exchange.buy(7);
-//            exchange.buy(7);
-//            exchange.doDeals();
-//            exchange.buy(7);
-//
-//            exchange.sell(7);
-//            exchange.sell(7);
-//            exchange.doDeals();
-//            exchange.sell(7);
-//            exchange.sell(6);
-//            exchange.doDeals();
-//            exchange.sell(9);
-//
-//            exchange.doDeals();
-//            exchange.doDeals();
-//            exchange.doDeals();
-//
-//            System.out.println("Buy queue:");
-//            for (Order order : exchange.getBuyQueue()) {
-//                System.out.println("Buy: " + order.getPrice());
-//            }
-//
-//            System.out.println("Sell queue:");
-//            for (Order order : exchange.getSellQueue()) {
-//                System.out.println("Buy: " + order.getPrice());
-//            }
-//
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        } while (true);
+    public void setup() {
+
+        this.initExchange();
+
+        colorMode(HSB, 360, 100, 100);
+        size(800, 800);
+
+//        color(360,100, 100);
+    }
+
+    static int frameNumer = 0;
+
+    private float mapE(int value, int max) {
+        return max - map(value, 900,1100, 0, max);
+    }
 
 
-//        size(500,500);
+    @Override
+    public void draw() {
+        if(frameNumer == 0) {
+            background(0);
+        }
 
+//        stroke(360, 100, 100);
+//        point(frameNumer, mapE(exchange.getLastDealPrice()));
+
+        stroke(360, 100, 100);
+        exchange.getSellQueue().forEach((Order o) -> {
+            point(frameNumer, mapE(o.getPrice(), height));
+        });
+        stroke(200, 100, 100);
+        exchange.getBuyQueue().forEach((Order o) -> {
+            point(frameNumer, mapE(o.getPrice(), height));
+        });
+        stroke(360, 0, 100);
+        point(frameNumer, mapE(exchange.getLastDealPrice(), height));
+        point(frameNumer, 1+mapE(exchange.getLastDealPrice(), height));
+
+
+        frameNumer++;
+        if(frameNumer > width) {
+            frameNumer = 0;
+        }
     }
 }

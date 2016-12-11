@@ -9,15 +9,15 @@ import model.Order;
 public enum SimpleBuyerAction {
     SELL {
         @Override
-        public Order doAction(Exchange exchange, int price) {
-            return exchange.sell(price);
+        public Order doAction(Exchange exchange, int delta) {
+            return exchange.bid(exchange.getBidPrice() + delta);
         }
     },
 
     BUY {
         @Override
-        public Order doAction(Exchange exchange, int price) {
-            return exchange.buy(price);
+        public Order doAction(Exchange exchange, int delta) {
+            return exchange.ask(exchange.getAskPrice() + delta);
         }
     };
 

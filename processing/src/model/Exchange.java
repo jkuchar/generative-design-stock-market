@@ -1,7 +1,5 @@
 package model;
 
-import com.sun.org.apache.xpath.internal.operations.Or;
-
 import java.util.*;
 
 /**
@@ -11,10 +9,10 @@ import java.util.*;
  * - does not support spoofing
  * - you have to call doDeals(); there is no automatic async-processing
  */
-public class Exchange {
+public class Exchange extends Thread {
 
-    private final SortedSet<Order> buy;
-    private final SortedSet<Order> sell;
+    private final SortedSet<Order> ask;
+    private final SortedSet<Order> bid;
 
     private final List<CompletedOrder> completedOrders;
 
@@ -25,15 +23,18 @@ public class Exchange {
     public Exchange() {
         int openingPrice = 1000;
         this.lastDealPrice = openingPrice;
-        this.buy = new TreeSet<>(new BackwardOrderComparator());
-        this.sell = new TreeSet<>(new BackwardOrderComparator());
+        this.ask = new TreeSet<>(new BackwardOrderComparator());
+        this.bid = new TreeSet<>(new BackwardOrderComparator());
         this.completedOrders = new LinkedList<>();
         observers = new LinkedList<>();
     }
 
-    public synchronized Order buy(int price) {
+    /**
+     * Try to buy shares
+     */
+    public synchronized Order ask(int price) {
         Order order = new Order(price);
-        buy.add(order);
+        ask.add(order);
 
         // fire observers
         observers.forEach( (ExchangeObserver observer) -> observer.newBuy(order) );
@@ -41,9 +42,12 @@ public class Exchange {
         return order;
     }
 
-    public synchronized Order sell(int price) {
+    /**
+     * Try to sell shares
+     */
+    public synchronized Order bid(int price) {
         Order order = new Order(price);
-        sell.add(order);
+        bid.add(order);
 
         // fire observers
         observers.forEach( (ExchangeObserver observer) -> observer.newSell(order) );
@@ -51,14 +55,19 @@ public class Exchange {
         return order;
     }
 
-    // in real world this will happen automatically after buy/sell
+    public synchronized void cancelOrder(Order o) {
+        bid.remove(o);
+        ask.remove(o);
+    }
+
+    // in real world this will happen automatically after ask/bid
     // This is really ineffective way how to do things.
-    public synchronized void doDeals() {
-        if(buy.isEmpty() || sell.isEmpty()) return;
+    private synchronized void doDeals() {
+        if(ask.isEmpty() || bid.isEmpty()) return;
 
         // doesn't matter which queue we will iterate over
-        Iterator<Order> buyIterator = buy.iterator();
-        Iterator<Order> sellIterator = sell.iterator();
+        Iterator<Order> buyIterator = ask.iterator();
+        Iterator<Order> sellIterator = bid.iterator();
 
         Order sellOrder = null;
         Order buyOrder = null;
@@ -70,7 +79,7 @@ public class Exchange {
             //}
 
             // now go from highest value to the lowest
-            // parallely iterate over buy and sell queue
+            // parallel iteration over ask and bid queue
             // this has only O(n)
 
             while(buyIterator.hasNext()) {
@@ -78,9 +87,9 @@ public class Exchange {
                     buyOrder = buyIterator.next();
                 }
 
-                //System.out.println("sell:" + sellOrder.getPrice() + " buy:" + buyOrder.getPrice());
+                //System.out.println("bid:" + sellOrder.getPrice() + " ask:" + buyOrder.getPrice());
                 if(sellOrder.getPrice() < buyOrder.getPrice()) {
-                    buyOrder = null; // got to the next buy request
+                    buyOrder = null; // got to the next ask request
                     continue;
                 }
                 if (buyOrder.getPrice() == sellOrder.getPrice()) {
@@ -90,17 +99,30 @@ public class Exchange {
                     CompletedOrder co = completeOrder(buyOrder, sellOrder);
                     observers.forEach( (ExchangeObserver observer) -> observer.orderCompleted(co) );
 
-                    buyOrder = null; // got to the next buy request
+                    buyOrder = null; // got to the next ask request
                     continue;
                 }
 
                 // intentionally didn't deleted buyOrder
-                // This will go out of buy-loop into sell-loop without moving to next buy request
+                // This will go out of ask-loop into bid-loop without moving to next ask request
                 break;
 
             }
 
         };
+    }
+
+    @Override
+    public void run() {
+        do {
+            this.doDeals();
+
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                System.out.println("Exchange matched failed.");
+            }
+        } while (true);
     }
 
     private CompletedOrder completeOrder(Order seller, Order buyer) {
@@ -115,12 +137,12 @@ public class Exchange {
     }
 
 
-    public synchronized SortedSet<Order> getBuyQueue() {
-        return new TreeSet<>(this.buy);
+    public synchronized NavigableSet<Order> getBuyQueue() {
+        return new TreeSet<>(this.ask);
     }
 
-    public synchronized SortedSet<Order> getSellQueue() {
-        return new TreeSet<>(this.sell);
+    public synchronized NavigableSet<Order> getSellQueue() {
+        return new TreeSet<>(this.bid);
     }
 
     public synchronized List<CompletedOrder> getCompletedOrders() {
@@ -129,5 +151,31 @@ public class Exchange {
 
     public synchronized int getLastDealPrice() {
         return lastDealPrice;
+    }
+
+    /**
+     * Price for seller
+     */
+    public synchronized Integer getBidPrice() {
+        try{
+            return ask.first().getPrice();
+        } catch (NoSuchElementException e) {
+            return getLastDealPrice();
+        }
+    }
+
+    /**
+     * Price for buyer
+     */
+    public synchronized Integer getAskPrice() {
+        try{
+            return bid.last().getPrice();
+        } catch (NoSuchElementException e) {
+            return getLastDealPrice();
+        }
+    }
+
+    public synchronized int getSpread() {
+        return getBidPrice() - getAskPrice();
     }
 }

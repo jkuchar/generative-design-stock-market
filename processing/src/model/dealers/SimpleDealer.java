@@ -13,6 +13,8 @@ public class SimpleDealer extends Thread implements Dealer {
     private int delta;
     private SimpleBuyerAction action;
 
+    Order lastOrder = null;
+
     public SimpleDealer(Exchange exchange, int delta, SimpleBuyerAction action)
     {
         this.delta = delta;
@@ -23,16 +25,20 @@ public class SimpleDealer extends Thread implements Dealer {
     @Override
     public void run() {
         do{
+            if(lastOrder != null) {
+                exchange.cancelOrder(lastOrder);
+            }
+
             // todo: cancel orders after ten ticks or so
-            Order o = action.doAction(
+            lastOrder = action.doAction(
                 exchange,
-                exchange.getLastDealPrice() + delta
+                delta
             );
 
 //            System.out.println("placed order; current price: " + exchange.getLastDealPrice() +  "; new my price: " + o.getPrice());
 
             try {
-                Thread.sleep(10);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 System.out.println("Thread interrupted.");
                 return;

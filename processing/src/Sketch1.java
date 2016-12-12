@@ -2,6 +2,7 @@ import model.*;
 import model.dealers.*;
 import processing.core.PApplet;
 
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -206,8 +207,112 @@ public class Sketch1 extends PApplet {
 
     @Override
     public void draw() {
+        handleMouse();
         drawGraph();
+        drawInstruction();
+        drawAccountStatus();
         drawPositions();
+    }
+
+    private void drawInstruction() {
+        StringBuilder status = new StringBuilder();
+        status.append("Click left to buy shares. Click right to sell shares. See what happens on your account.\n");
+        status.append("Use keyboard to control big-boy account. Press 's' to sell or 'b' to buy 100 000.\n\n");
+        status.append("Graph: red dots are sellers requests, blue dots are buyers requests. White is closed deal.");
+        //status.append("Try to double your money ");
+
+        fill(255);
+        noStroke();
+        textSize(12);
+        text(status.toString(), 250, 20);
+    }
+
+    private void drawAccountStatus() {
+        stroke(255);
+        fill(0);
+        rect(0, 0, 220, 110);
+
+        StringBuilder status = new StringBuilder();
+        status.append("Your account:\n");
+        status.append("Money: ");
+        status.append(money);
+        status.append("\n");
+
+        status.append("Own shares:");
+        status.append(ownShares);
+        status.append("\n");
+
+        status.append("Shares bought / sold:");
+        status.append(sharesBought);
+        status.append(" / ");
+        status.append(sharesSold);
+        status.append("\n");
+
+        fill(255);
+        noStroke();
+        textSize(12);
+        text(status.toString(), 10, 20);
+
+    }
+
+    int money = 50000;
+    int ownShares = 0;
+    int sharesBought = 0;
+    int sharesSold = 0;
+
+
+    private void handleMouse() {
+        if (mousePressed && (mouseButton == LEFT)) {
+            if(money < 1) {
+                return;
+            }
+            // buy
+            Order o = exchange.ask(exchange.getAskPrice());
+            o.addCompleted(() -> {
+                money -= o.getPrice();
+                sharesBought++;
+                ownShares++;
+            });
+
+        } else if (mousePressed && (mouseButton == RIGHT)) {
+            if(ownShares < 1) {
+                return;
+            }
+
+            // sell
+            Order o = exchange.bid(exchange.getBidPrice());
+            o.addCompleted(() -> {
+                money += o.getPrice();
+                sharesSold++;
+                ownShares--;
+            });
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch (e.getKeyChar()) {
+            case 'b':
+                (new WantToBuyForAmount(exchange, 1200, 100000)).start();
+                break;
+            case 's':
+                (new WantToSellForAmount(exchange, 800, 100000)).start();
+                break;
+//            case 'r':
+////                new RandomDeltaDealer(
+////                        exchange,
+////                        (int) Math.round(Math.random() * 3),
+////                        1,
+////                        10
+////                ).start();
+//                new RandomDeltaDealer(
+//                        exchange,
+//                        (int) Math.round(Math.random() * 1),
+//                        0,
+//                        5
+//                ).start();
+//                break;
+        }
     }
 
     private void drawGraph() {

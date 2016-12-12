@@ -16,7 +16,7 @@ public class WantToSellForAmount extends BaseDealer {
     private Order lastOrder = null;
 
     public WantToSellForAmount(Exchange exchange) {
-        this(exchange, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        this(exchange, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     public WantToSellForAmount(Exchange exchange, int minPrice, int amountToSell)
